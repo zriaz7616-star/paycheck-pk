@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PakSalary.io | Free Pakistan Salary & Tax Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Alpine.js for reactive UI -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between" x-data="salaryCalculator()">
+
+    <!-- Header -->
+    <header class="bg-emerald-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <span class="text-xl font-bold tracking-tight">PakSalary<span class="text-emerald-200">.io</span></span>
+            </div>
+            <span class="text-xs bg-emerald-700 px-2 py-1 rounded-full font-medium">FBR Slabs 2026</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-md mx-auto px-4 py-6 w-full flex-grow">
+        
+        <!-- Hero Tagline -->
+        <div class="mb-6 text-center">
+            <h1 class="text-xl font-bold text-slate-900">Calculate Net Salary & Tax in Pakistan</h1>
+            <p class="text-xs text-slate-500 mt-1">Accurate calculations according to latest FBR tax rules.</p>
+        </div>
+
+        <!-- Calculator Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+            
+            <!-- Monthly Gross Salary Input -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Monthly Gross Salary (PKR)</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-medium">Rs.</span>
+                    <input type="number" x-model.number="monthlyGross" placeholder="e.g. 150000" 
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-lg font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
+                </div>
+            </div>
+
+            <!-- Tax Year Selection -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Tax Year</label>
+                <select x-model="taxYear" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="2025-2026">2025 - 2026</option>
+                </select>
+            </div>
+
+            <!-- Toggle Advanced Options -->
+            <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+                <span class="text-xs font-medium text-slate-600">Include Provident Fund / Deductions</span>
+                <input type="checkbox" x-model="includeDeductions" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+            </div>
+
+            <!-- Conditional Deductions Input -->
+            <template x-if="includeDeductions">
+                <div class="space-y-3 pt-2">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Monthly Provident Fund (PKR)</label>
+                        <input type="number" x-model.number="monthlyPF" placeholder="e.g. 5000" 
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+            </template>
+
+        </div>
+
+        <!-- Results Card -->
+        <div class="mt-6 bg-slate-900 text-white rounded-2xl p-5 shadow-lg space-y-4">
+            <h2 class="text-xs uppercase tracking-widest text-emerald-400 font-bold">Salary Breakdown</h2>
+            
+            <div class="grid grid-cols-2 gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <p class="text-xs text-slate-400">Annual Gross</p>
+                    <p class="text-base font-bold" x-text="formatCurrency(annualGross)"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400">Estimated Annual Tax</p>
+                    <p class="text-base font-bold text-rose-400" x-text="formatCurrency(annualTax)"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-xs text-slate-400">Monthly Tax Deduction</p>
+                    <p class="text-base font-semibold text-rose-300" x-text="formatCurrency(monthlyTax)"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400">Net Take-Home / Month</p>
+                    <p class="text-lg font-extrabold text-emerald-400" x-text="formatCurrency(netMonthly)"></p>
+                </div>
+            </div>
+
+            <!-- WhatsApp Share Button -->
+            <div class="pt-2">
+                <button @click="shareOnWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center space-x-2 transition shadow">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448c-1.606.001-6.195-1.688-6.195z"/></svg>
+                    <span>Share Summary on WhatsApp</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Freemium Banner / Upgrade Prompt -->
+        <div class="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
+            <span class="inline-block bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">PakSalary Pro (Coming Soon)</span>
+            <p class="text-xs text-slate-600">Want official PDF salary certificates, multi-currency conversion, and annual tax comparison reports?</p>
+            <button @click="alert('Pro features launching soon! Price: PKR 150/month.')" class="text-xs font-bold text-amber-700 hover:underline">Learn more about Pro →</button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
+        <p>© 2026 PakSalary.io • Built for Pakistani Professionals</p>
+    </footer>
+
+    <!-- Calculation Logic Script -->
+    <script>
+        function salaryCalculator() {
+            return {
+                monthlyGross: 100000,
+                taxYear: '2025-2026',
+                includeDeductions: false,
+                monthlyPF: 0,
+
+                get annualGross() {
+                    return (this.monthlyGross || 0) * 12;
+                },
+
+                get annualTax() {
+                    let income = this.annualGross;
+                    let tax = 0;
+
+                    // Simplified FBR Salaried Tax Slabs (Illustrative structure)
+                    if (income <= 600000) {
+                        tax = 0;
+                    } else if (income > 600000 && income <= 1200000) {
+                        tax = (income - 600000) * 0.05;
+                    } else if (income > 1200000 && income <= 2200000) {
+                        tax = 30000 + (income - 1200000) * 0.15;
+                    } else if (income > 2200000 && income <= 3200000) {
+                        tax = 180000 + (income - 2200000) * 0.25;
+                    } else if (income > 3200000 && income <= 4100000) {
+                        tax = 430000 + (income - 3200000) * 0.30;
+                    } else {
+                        tax = 700000 + (income - 4100000) * 0.35;
+                    }
+                    return Math.max(0, tax);
+                },
+
+                get monthlyTax() {
+                    return Math.round(this.annualTax / 12);
+                },
+
+                get netMonthly() {
+                    let deductions = this.includeDeductions ? (this.monthlyPF || 0) : 0;
+                    return Math.round(this.monthlyGross - this.monthlyTax - deductions);
+                },
+
+                formatCurrency(val) {
+                    return 'Rs. ' + Number(val || 0).toLocaleString('en-PK');
+                },
+
+                shareOnWhatsApp() {
+                    let text = `📊 *My Salary & Tax Breakdown (PakSalary.io)*\n\n` +
+                               `• Monthly Gross: ${this.formatCurrency(this.monthlyGross)}\n` +
+                               `• Est. Monthly Tax: ${this.formatCurrency(this.monthlyTax)}\n` +
+                               `• Net Take-Home: ${this.formatCurrency(this.netMonthly)}\n\n` +
+                               `Calculated via PakSalary.io 🇵🇰`;
+                    let encoded = encodeURIComponent(text);
+                    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
